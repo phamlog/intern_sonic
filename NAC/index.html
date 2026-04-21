@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>EasyNAC</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a
+href="#easynac-phân-tích-kỹ-thuật-chuyên-sâu-kiến-trúc-cơ-chế-flow-hoạt-động"
+id="toc-easynac-phân-tích-kỹ-thuật-chuyên-sâu-kiến-trúc-cơ-chế-flow-hoạt-động">EasyNAC
+– Phân Tích Kỹ Thuật Chuyên Sâu: Kiến Trúc, Cơ Chế &amp; Flow Hoạt
+Động</a>
+<ul>
+<li><a href="#mục-lục" id="toc-mục-lục">Mục Lục</a></li>
+<li><a href="#tổng-quan-định-vị-sản-phẩm"
+id="toc-tổng-quan-định-vị-sản-phẩm">1. Tổng Quan &amp; Định Vị Sản
+Phẩm</a>
+<ul>
+<li><a href="#triết-lý-thiết-kế-cốt-lõi"
+id="toc-triết-lý-thiết-kế-cốt-lõi">Triết lý thiết kế cốt lõi</a></li>
+</ul></li>
+<li><a href="#kiến-trúc-hệ-thống" id="toc-kiến-trúc-hệ-thống">2. Kiến
+Trúc Hệ Thống</a>
+<ul>
+<li><a href="#easynac-appliance-cgx-access"
+id="toc-easynac-appliance-cgx-access">2.1 EasyNAC Appliance (CGX
+Access)</a></li>
+<li><a href="#enforcer-sensors-phần-mềm"
+id="toc-enforcer-sensors-phần-mềm">2.2 Enforcer Sensors (phần
+mềm)</a></li>
+<li><a href="#vlinks-phần-cứng-nhỏ" id="toc-vlinks-phần-cứng-nhỏ">2.3
+vLinks (phần cứng nhỏ)</a></li>
+<li><a href="#central-visibility-manager-cvm"
+id="toc-central-visibility-manager-cvm">2.4 Central Visibility Manager
+(CVM)</a></li>
+</ul></li>
+<li><a href="#kỹ-thuật-cốt-lõi-arp-enforcement"
+id="toc-kỹ-thuật-cốt-lõi-arp-enforcement">3. Kỹ Thuật Cốt Lõi: ARP
+Enforcement</a>
+<ul>
+<li><a href="#arp-là-gì-và-tại-sao-có-thể-bị-khai-thác"
+id="toc-arp-là-gì-và-tại-sao-có-thể-bị-khai-thác">3.1 ARP là gì và tại
+sao có thể bị khai thác?</a></li>
+<li><a href="#cơ-chế-arp-enforcement-hoạt-động-ra-sao"
+id="toc-cơ-chế-arp-enforcement-hoạt-động-ra-sao">3.2 Cơ chế ARP
+Enforcement hoạt động ra sao</a></li>
+<li><a href="#bypass-bằng-static-arp-và-tại-sao-không-hiệu-quả"
+id="toc-bypass-bằng-static-arp-và-tại-sao-không-hiệu-quả">3.3 Bypass
+bằng Static ARP – và tại sao không hiệu quả</a></li>
+<li><a href="#so-sánh-với-các-phương-pháp-enforcement-khác"
+id="toc-so-sánh-với-các-phương-pháp-enforcement-khác">3.4 So sánh với
+các phương pháp enforcement khác</a></li>
+</ul></li>
+<li><a href="#flow-hoạt-động-đầy-đủ-end-to-end"
+id="toc-flow-hoạt-động-đầy-đủ-end-to-end">4. Flow Hoạt Động Đầy Đủ
+(End-to-End)</a></li>
+<li><a href="#device-discovery-profiling-kỹ-thuật-nhận-diện-thiết-bị"
+id="toc-device-discovery-profiling-kỹ-thuật-nhận-diện-thiết-bị">5.
+Device Discovery &amp; Profiling – Kỹ Thuật Nhận Diện Thiết Bị</a>
+<ul>
+<li><a href="#passive-profiling-không-gửi-traffic"
+id="toc-passive-profiling-không-gửi-traffic">5.1 Passive Profiling –
+Không gửi traffic</a></li>
+<li><a href="#active-profiling-chủ-động-thăm-dò"
+id="toc-active-profiling-chủ-động-thăm-dò">5.2 Active Profiling – Chủ
+động thăm dò</a></li>
+<li><a href="#device-profile-output" id="toc-device-profile-output">5.3
+Device Profile Output</a></li>
+</ul></li>
+<li><a href="#zero-trust-role-based-access-control-rbac"
+id="toc-zero-trust-role-based-access-control-rbac">6. Zero Trust &amp;
+Role-Based Access Control (RBAC)</a>
+<ul>
+<li><a href="#auto-trust-policy-engine"
+id="toc-auto-trust-policy-engine">6.1 Auto Trust Policy Engine</a></li>
+<li><a href="#roles-và-acls" id="toc-roles-và-acls">6.2 Roles và
+ACLs</a></li>
+<li><a href="#continuous-re-evaluation"
+id="toc-continuous-re-evaluation">6.3 Continuous Re-evaluation</a></li>
+</ul></li>
+<li><a href="#anti-spoofing-device-fingerprinting"
+id="toc-anti-spoofing-device-fingerprinting">7. Anti-Spoofing &amp;
+Device Fingerprinting</a>
+<ul>
+<li><a href="#multi-attribute-fingerprinting"
+id="toc-multi-attribute-fingerprinting">7.1 Multi-attribute
+Fingerprinting</a></li>
+<li><a href="#fingerprint-based-2fa-cho-vpn"
+id="toc-fingerprint-based-2fa-cho-vpn">7.2 Fingerprint-based 2FA cho
+VPN</a></li>
+</ul></li>
+<li><a href="#automated-threat-response"
+id="toc-automated-threat-response">8. Automated Threat Response</a>
+<ul>
+<li><a href="#nguồn-trigger" id="toc-nguồn-trigger">8.1 Nguồn
+trigger</a></li>
+<li><a href="#cơ-chế-xử-lý" id="toc-cơ-chế-xử-lý">8.2 Cơ chế xử
+lý</a></li>
+<li><a href="#use-case-điển-hình" id="toc-use-case-điển-hình">8.3 Use
+case điển hình</a></li>
+</ul></li>
+<li><a href="#zero-day-malware-lateral-spread-protection"
+id="toc-zero-day-malware-lateral-spread-protection">9. Zero-Day &amp;
+Malware Lateral Spread Protection</a>
+<ul>
+<li><a href="#vấn-đề" id="toc-vấn-đề">9.1 Vấn đề</a></li>
+<li><a href="#phát-hiện-qua-layer-2-visibility"
+id="toc-phát-hiện-qua-layer-2-visibility">9.2 Phát hiện qua Layer-2
+visibility</a></li>
+</ul></li>
+<li><a href="#deception-technology-honeypot-phân-tán"
+id="toc-deception-technology-honeypot-phân-tán">10. Deception Technology
+– Honeypot Phân Tán</a>
+<ul>
+<li><a href="#kiến-trúc-distributed-honeypot"
+id="toc-kiến-trúc-distributed-honeypot">10.1 Kiến trúc Distributed
+Honeypot</a></li>
+<li><a href="#lợi-thế-near-zero-false-positives"
+id="toc-lợi-thế-near-zero-false-positives">10.2 Lợi thế: Near-Zero False
+Positives</a></li>
+<li><a href="#detection-flow" id="toc-detection-flow">10.3 Detection
+flow</a></li>
+<li><a href="#tầng-bảo-vệ-với-honey-service-trên-mỗi-vlan"
+id="toc-tầng-bảo-vệ-với-honey-service-trên-mỗi-vlan">10.4 Tầng bảo vệ
+với honey service trên mỗi VLAN</a></li>
+</ul></li>
+<li><a href="#byod-guest-access-management"
+id="toc-byod-guest-access-management">11. BYOD &amp; Guest Access
+Management</a>
+<ul>
+<li><a href="#byod-registration-flow"
+id="toc-byod-registration-flow">11.1 BYOD Registration Flow</a></li>
+<li><a href="#policy-controls-cho-byod"
+id="toc-policy-controls-cho-byod">11.2 Policy controls cho BYOD</a></li>
+<li><a href="#guest-access" id="toc-guest-access">11.3 Guest
+Access</a></li>
+</ul></li>
+<li><a href="#kiến-trúc-triển-khai-3-phương-thức-kết-nối"
+id="toc-kiến-trúc-triển-khai-3-phương-thức-kết-nối">12. Kiến Trúc Triển
+Khai: 3 Phương Thức Kết Nối</a>
+<ul>
+<li><a href="#method-1-physical-connection"
+id="toc-method-1-physical-connection">Method 1 – Physical
+Connection</a></li>
+<li><a href="#method-2-802.1q-trunk"
+id="toc-method-2-802.1q-trunk">Method 2 – 802.1q Trunk</a></li>
+<li><a href="#method-3-vlinks-enforcer-sensors-cho-remote-sites"
+id="toc-method-3-vlinks-enforcer-sensors-cho-remote-sites">Method 3 –
+vLinks / Enforcer Sensors cho Remote Sites</a></li>
+</ul></li>
+<li><a href="#enforcer-sensors-vlinks-mở-rộng-bảo-vệ-chi-nhánh"
+id="toc-enforcer-sensors-vlinks-mở-rộng-bảo-vệ-chi-nhánh">13. Enforcer
+Sensors &amp; vLinks – Mở Rộng Bảo Vệ Chi Nhánh</a>
+<ul>
+<li><a href="#enforcer-sensor-chi-tiết-kỹ-thuật"
+id="toc-enforcer-sensor-chi-tiết-kỹ-thuật">13.1 Enforcer Sensor – Chi
+tiết kỹ thuật</a></li>
+<li><a href="#agent-tùy-chọn-khi-nào-cần"
+id="toc-agent-tùy-chọn-khi-nào-cần">13.2 Agent tùy chọn – Khi nào
+cần?</a></li>
+</ul></li>
+<li><a href="#vpn-inline-enforcement"
+id="toc-vpn-inline-enforcement">14. VPN Inline Enforcement</a>
+<ul>
+<li><a href="#vấn-đề-vpn" id="toc-vấn-đề-vpn">14.1 Vấn đề VPN</a></li>
+<li><a href="#inline-mode-cho-vpn" id="toc-inline-mode-cho-vpn">14.2
+Inline Mode cho VPN</a></li>
+</ul></li>
+<li><a href="#high-availability-ha" id="toc-high-availability-ha">15.
+High Availability (HA)</a></li>
+<li><a href="#central-visibility-manager-cvm-1"
+id="toc-central-visibility-manager-cvm-1">16. Central Visibility Manager
+(CVM)</a></li>
+<li><a href="#tích-hợp-hệ-sinh-thái-bảo-mật"
+id="toc-tích-hợp-hệ-sinh-thái-bảo-mật">17. Tích Hợp Hệ Sinh Thái Bảo
+Mật</a>
+<ul>
+<li><a href="#identity-directory" id="toc-identity-directory">Identity
+&amp; Directory</a></li>
+<li><a href="#endpoint-security-xdr"
+id="toc-endpoint-security-xdr">Endpoint Security / XDR</a></li>
+<li><a href="#antivirus" id="toc-antivirus">Antivirus</a></li>
+<li><a href="#patch-endpoint-management"
+id="toc-patch-endpoint-management">Patch &amp; Endpoint
+Management</a></li>
+<li><a href="#vulnerability-management"
+id="toc-vulnerability-management">Vulnerability Management</a></li>
+<li><a href="#specialty" id="toc-specialty">Specialty</a></li>
+</ul></li>
+<li><a href="#compliance-checks-endpoint-posture-validation"
+id="toc-compliance-checks-endpoint-posture-validation">18. Compliance
+Checks &amp; Endpoint Posture Validation</a>
+<ul>
+<li><a href="#agentless-compliance-checks"
+id="toc-agentless-compliance-checks">18.1 Agentless Compliance
+Checks</a></li>
+<li><a href="#agent-based-compliance-checks-tùy-chọn"
+id="toc-agent-based-compliance-checks-tùy-chọn">18.2 Agent-based
+Compliance Checks (tùy chọn)</a></li>
+<li><a href="#dynamic-re-check" id="toc-dynamic-re-check">18.3 Dynamic
+Re-check</a></li>
+</ul></li>
+<li><a href="#licensing-sizing" id="toc-licensing-sizing">19. Licensing
+&amp; Sizing</a>
+<ul>
+<li><a href="#mô-hình-license" id="toc-mô-hình-license">19.1 Mô hình
+License</a></li>
+<li><a href="#appliance-capacity" id="toc-appliance-capacity">19.2
+Appliance Capacity</a></li>
+<li><a href="#grace-period" id="toc-grace-period">19.3 Grace
+Period</a></li>
+<li><a href="#sizing-guidelines" id="toc-sizing-guidelines">19.4 Sizing
+Guidelines</a></li>
+</ul></li>
+<li><a href="#so-sánh-với-nac-truyền-thống-802.1x"
+id="toc-so-sánh-với-nac-truyền-thống-802.1x">20. So Sánh với NAC Truyền
+Thống (802.1X)</a></li>
+<li><a href="#điểm-mạnh-giới-hạn-đánh-giá-tổng-quan"
+id="toc-điểm-mạnh-giới-hạn-đánh-giá-tổng-quan">21. Điểm Mạnh, Giới Hạn
+&amp; Đánh Giá Tổng Quan</a>
+<ul>
+<li><a href="#điểm-mạnh" id="toc-điểm-mạnh">Điểm mạnh</a></li>
+<li><a href="#giới-hạn-lưu-ý" id="toc-giới-hạn-lưu-ý">Giới hạn &amp; lưu
+ý</a></li>
+<li><a href="#kết-luận" id="toc-kết-luận">Kết luận</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1
+id="easynac-phân-tích-kỹ-thuật-chuyên-sâu-kiến-trúc-cơ-chế-flow-hoạt-động">EasyNAC
+– Phân Tích Kỹ Thuật Chuyên Sâu: Kiến Trúc, Cơ Chế &amp; Flow Hoạt
+Động</h1>
+<hr />
+
+<p>EasyNAC là giải pháp <strong>Network Access Control (NAC) thế hệ thứ
+ba</strong>, phát triển bởi InfoExpress, Inc. – công ty bảo mật mạng có
+trụ sở tại Santa Clara, California. Sản phẩm được thiết kế để giải quyết
+điểm yếu cố hữu của các NAC truyền thống: <strong>quá phức tạp, tốn thời
+gian, và đắt để triển khai</strong>.</p>
+<p>NAC (Network Access Control) về bản chất là tập hợp các cơ chế để: -
+Kiểm soát <strong>ai</strong> và <strong>thiết bị nào</strong> được kết
+nối vào mạng nội bộ - Đảm bảo thiết bị đáp ứng <strong>chính sách bảo
+mật</strong> trước khi được cấp quyền truy cập - Phân quyền truy cập
+theo <strong>vai trò và mức độ tin cậy</strong></p>
+<p>Các NAC thế hệ cũ (như Cisco ISE, ForeScout) thường yêu cầu triển
+khai <strong>802.1X</strong> trên toàn bộ switch, cấu hình RADIUS
+server, thiết kế lại VLAN, và thường mất nhiều tháng để đưa vào vận
+hành. EasyNAC đặt cược vào một hướng tiếp cận khác: <strong>không cần
+thay đổi hạ tầng mạng, không cần agent bắt buộc, triển khai trong vài
+ngày đến vài tuần</strong>.</p>
+<h3 id="triết-lý-thiết-kế-cốt-lõi">Triết lý thiết kế cốt lõi</h3>
+<p>EasyNAC xây dựng trên ba nguyên tắc:</p>
+<ol type="1">
+<li><p><strong>Network-agnostic</strong>: Hoạt động với bất kỳ switch,
+hub, AP, VPN concentrator nào – kể cả thiết bị không được quản lý
+(unmanaged). Không yêu cầu switch hỗ trợ 802.1X hay RADIUS.</p></li>
+<li><p><strong>Agentless-first</strong>: Tất cả tính năng cốt lõi (phát
+hiện thiết bị, phân loại, kiểm soát truy cập) hoạt động mà không cần cài
+agent lên endpoint. Agent là tùy chọn nâng cao, không bắt buộc.</p></li>
+<li><p><strong>Out-of-band enforcement</strong>: EasyNAC không nằm trên
+đường truyền dữ liệu chính (inline với lưu lượng thông thường). Nó can
+thiệp <strong>có chọn lọc</strong> bằng cơ chế ARP – chỉ redirect lưu
+lượng của các thiết bị cần kiểm soát.</p></li>
+</ol>
+<hr />
+<h2 id="kiến-trúc-hệ-thống">2. Kiến Trúc Hệ Thống</h2>
+<p>Hệ thống EasyNAC gồm <strong>4 thành phần chính</strong>:</p>
+<h3 id="easynac-appliance-cgx-access">2.1 EasyNAC Appliance (CGX
+Access)</h3>
+<p>Đây là trái tim của giải pháp. Appliance có thể là: -
+<strong>Hardware appliance</strong>: Thiết bị vật lý cứng hóa,
+rack-mounted - <strong>Virtual appliance</strong>: Chạy trên VMware
+ESXi, Microsoft Hyper-V, hoặc KVM</p>
+<p>Một Appliance có thể bảo vệ <strong>lên đến 200 subnet/VLAN</strong>
+đồng thời thông qua trunk port 802.1q. Nó cần <strong>kết nối
+Layer-2</strong> với các subnet mà nó bảo vệ – đây là điều kiện kỹ thuật
+bắt buộc duy nhất.</p>
+<p>Appliance thực hiện toàn bộ vòng lặp: phát hiện → profiling → phân
+công quyền → thực thi (enforcement) → giám sát liên tục.</p>
+<h3 id="enforcer-sensors-phần-mềm">2.2 Enforcer Sensors (phần mềm)</h3>
+<p>Là cảm biến phần mềm nhẹ, triển khai tại các chi nhánh hoặc site từ
+xa. Chạy trên: - Windows 64-bit - Linux - Raspberry Pi</p>
+<p>Sensor giao tiếp ngược về Appliance trung tâm để báo cáo thiết bị
+phát hiện được, nhận lệnh từ Appliance và thực thi ARP enforcement cục
+bộ. Khi có compliance check thất bại, Sensor phát hiện trong khoảng
+<strong>dưới 10 giây</strong>.</p>
+<h3 id="vlinks-phần-cứng-nhỏ">2.3 vLinks (phần cứng nhỏ)</h3>
+<p>Là thiết bị phần cứng nhỏ giá thành thấp, dùng để kéo <strong>Layer-2
+tunnel</strong> từ chi nhánh về Appliance trung tâm. Không cần cấu hình
+mạng – thậm chí nhân viên không chuyên IT cũng có thể lắp đặt.</p>
+<h3 id="central-visibility-manager-cvm">2.4 Central Visibility Manager
+(CVM)</h3>
+<p>Platform quản lý tập trung dùng khi tổ chức có <strong>nhiều
+Appliance</strong> ở nhiều địa điểm. CVM không thực hiện enforcement mà
+chuyên về: tổng hợp báo cáo, đồng bộ policy, quản lý license phân tán,
+tự động backup cấu hình.</p>
+<hr />
+<h2 id="kỹ-thuật-cốt-lõi-arp-enforcement">3. Kỹ Thuật Cốt Lõi: ARP
+Enforcement</h2>
+<p>Đây là kỹ thuật phân biệt EasyNAC với các NAC khác. Để hiểu sâu, cần
+nắm rõ cơ bản về ARP.</p>
+<h3 id="arp-là-gì-và-tại-sao-có-thể-bị-khai-thác">3.1 ARP là gì và tại
+sao có thể bị khai thác?</h3>
+<p><strong>ARP (Address Resolution Protocol)</strong> là giao thức
+Layer-2 trong TCP/IP, dùng để ánh xạ địa chỉ IP thành địa chỉ MAC. Khi
+thiết bị A muốn gửi gói tin đến IP của thiết bị B trong cùng subnet, nó
+broadcast một ARP Request: <em>“Ai có IP x.x.x.x thì cho tôi biết MAC
+của bạn?”</em> Thiết bị B trả lời bằng ARP Reply với MAC của mình. Thiết
+bị A lưu thông tin này vào ARP cache.</p>
+<p>Điểm yếu cố hữu: <strong>ARP không có xác thực</strong>. Bất kỳ thiết
+bị nào cũng có thể gửi ARP Reply giả mạo, khiến nạn nhân lưu ARP cache
+sai. Đây là cơ sở của cuộc tấn công ARP Spoofing / ARP Poisoning.</p>
+<p>EasyNAC khai thác chính cơ chế này <strong>để kiểm soát truy cập
+mạng</strong>.</p>
+<h3 id="cơ-chế-arp-enforcement-hoạt-động-ra-sao">3.2 Cơ chế ARP
+Enforcement hoạt động ra sao</h3>
+<p>Khi EasyNAC phát hiện thiết bị không được tin cậy (untrusted), nó
+thực hiện:</p>
+<p><strong>Bước 1 – Gửi ARP Reply định kỳ</strong>: Appliance gửi các
+gói <strong>ARP REPLY</strong> đến thiết bị chưa được tin cậy, “thông
+báo” rằng gateway (hoặc các đích muốn liên lạc) có MAC address là MAC
+của Appliance. Kết quả: ARP cache của thiết bị bị redirect – mọi traffic
+ra ngoài sẽ đi qua Appliance.</p>
+<p><strong>Bước 2 – Gửi ARP Reply ngược</strong>: Song song đó,
+Appliance cũng gửi ARP Reply đến <strong>các thiết bị khác</strong>
+trong subnet, thông báo rằng IP của thiết bị bị restricted có MAC là MAC
+giả. Kết quả: các thiết bị khác trong mạng cũng không thể liên lạc trực
+tiếp với thiết bị bị kiểm soát.</p>
+<p><strong>Bước 3 – Traffic Diversion qua ACL</strong>: Lưu lượng của
+thiết bị bị redirect qua Appliance. Tại đây, một <strong>Access Control
+List (ACL)</strong> định nghĩa chính xác những gì được phép: - Thiết bị
+guest: chỉ được ra internet (HTTP/HTTPS) - Thiết bị BYOD: chỉ được truy
+cập tài nguyên được phê duyệt - Thiết bị bị cách ly hoàn toàn: chỉ được
+truy cập captive portal để remediation - Thiết bị bị block: không được
+forward gói tin nào</p>
+<p><strong>Quan trọng</strong>: EasyNAC dùng <strong>Directed ARP
+REPLY</strong> (unicast), <strong>không</strong> dùng ARP Broadcast.
+Điều này đảm bảo chỉ các thiết bị không tin cậy mới bị redirect, trong
+khi các thiết bị đã được tin cậy vẫn sử dụng mạng bình thường <strong>mà
+không bị chậm hay gián đoạn</strong>.</p>
+<h3 id="bypass-bằng-static-arp-và-tại-sao-không-hiệu-quả">3.3 Bypass
+bằng Static ARP – và tại sao không hiệu quả</h3>
+<p>Một câu hỏi tự nhiên: <em>liệu kẻ tấn công có thể thoát khỏi
+enforcement bằng cách đặt static ARP entry?</em> Câu trả lời là không.
+Khi thiết bị bị restricted cố giao tiếp với một địa chỉ, Appliance sẽ
+<strong>liên tục gửi ARP cập nhật đến thiết bị đích</strong>, đảm bảo
+thiết bị đích luôn có ARP cache trỏ về Appliance thay vì về thiết bị bị
+restricted. Thiết bị bị restricted không thể kiểm soát ARP cache của
+thiết bị đích.</p>
+<h3 id="so-sánh-với-các-phương-pháp-enforcement-khác">3.4 So sánh với
+các phương pháp enforcement khác</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Phương pháp</th>
+<th>Yêu cầu</th>
+<th>Ưu điểm</th>
+<th>Nhược điểm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>802.1X</strong></td>
+<td>Switch hỗ trợ, RADIUS server, supplicant trên endpoint</td>
+<td>Mạnh, chuẩn công nghiệp</td>
+<td>Phức tạp, tốn kém</td>
+</tr>
+<tr>
+<td><strong>VLAN-based enforcement</strong></td>
+<td>Switch managed, cấu hình VLAN</td>
+<td>Tương đối mạnh</td>
+<td>Cần thay đổi thiết kế mạng</td>
+</tr>
+<tr>
+<td><strong>ARP Enforcement (EasyNAC)</strong></td>
+<td>Chỉ cần Layer-2 visibility</td>
+<td>Không cần thay đổi mạng, hoạt động với mọi switch</td>
+<td>Chỉ áp dụng trực tiếp cho IPv4; IPv6 cần phương pháp khác</td>
+</tr>
+<tr>
+<td><strong>Inline enforcement</strong></td>
+<td>Thiết bị nằm trên đường truyền</td>
+<td>Kiểm soát tuyệt đối</td>
+<td>Tạo single point of failure nếu không có HA</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="flow-hoạt-động-đầy-đủ-end-to-end">4. Flow Hoạt Động Đầy Đủ
+(End-to-End)</h2>
+<p>Dưới đây là toàn bộ vòng đời xử lý từ khi thiết bị mới xuất hiện cho
+đến khi được cấp hoặc bị từ chối quyền truy cập.</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                  THIẾT BỊ KẾT NỐI VÀO MẠNG                      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                    DHCP Request / ARP Broadcast
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 1: DETECTION (&lt; 1 giây)                       │
+│  - EasyNAC lắng nghe Layer-2 broadcast traffic                   │
+│  - Phát hiện MAC address mới                                     │
+│  - Ghi nhận: MAC, IP (nếu có), thời gian, VLAN                  │
+│  - Ngay lập tức: đặt thiết bị vào trạng thái &quot;UNTRUSTED&quot;        │
+│  - Bắt đầu ARP enforcement nếu enforcement mode đang bật        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 2: PROFILING (song song với enforcement)      │
+│                                                                  │
+│  PASSIVE PROFILING:                                              │
+│  - Phân tích ARP packets (MAC OUI → nhà sản xuất)               │
+│  - Phân tích DHCP packets (Option 55 fingerprint → OS)          │
+│  - Lắng nghe mDNS/Bonjour broadcasts                            │
+│  - Theo dõi NetBIOS name announcements                           │
+│                                                                  │
+│  ACTIVE PROFILING (sau khi device được phát hiện):              │
+│  - NMAP scanning: kiểm tra open ports, OS fingerprinting        │
+│  - SNMP: query switch để lấy thông tin port, device info         │
+│  - SMB/NetBIOS: lấy hostname, workgroup/domain                  │
+│  - WMI (nếu Windows và có credential): OS version, patches      │
+│  - LLTD (Link Layer Topology Discovery): topology info          │
+│  - UPnP: thông tin thiết bị IoT                                  │
+│  - Kết hợp với AD (nếu đã cấu hình): domain membership          │
+│  - Kết hợp với 3rd-party AV/XDR API                             │
+│                                                                  │
+│  OUTPUT: Device Profile                                          │
+│  {MAC, IP, Hostname, OS, Device Type, Vendor, Open Ports,       │
+│   Domain Status, AV Status, Patch Status, Switch Port}          │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 3: ROLE ASSIGNMENT                            │
+│                                                                  │
+│  Áp dụng Auto Trust Policy theo thứ tự ưu tiên:                 │
+│                                                                  │
+│  1. Blocklist check → nếu có: RESTRICT ngay                     │
+│  2. Allowlist check → nếu có: FULL ACCESS ngay                  │
+│  3. Auto Trust Policy:                                           │
+│     - Domain-joined? → kiểm tra với AD server                   │
+│     - AV managed &amp; up-to-date? → kiểm tra với AV server         │
+│     - Patch compliant? → kiểm tra với patch management          │
+│     - Device type match? → từ device profiling                  │
+│     - Fingerprint match? → chống spoofing                       │
+│                                                                  │
+│  ROLES (ví dụ):                                                  │
+│  - FULL ACCESS: thiết bị domain-joined, AV compliant            │
+│  - RESTRICTED: BYOD (chỉ tài nguyên được phê duyệt)            │
+│  - INTERNET ONLY: Guest                                          │
+│  - QUARANTINE: bị cô lập, chỉ đến captive portal                │
+│  - BLOCKED: không được phép bất kỳ traffic nào                  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 4: ENFORCEMENT                                │
+│                                                                  │
+│  Dựa trên Role được assign:                                      │
+│                                                                  │
+│  - FULL ACCESS: Không can thiệp, thiết bị giao tiếp bình thường │
+│  - RESTRICTED/QUARANTINE:                                        │
+│    * ARP Enforcement bắt đầu (directed ARP Reply)               │
+│    * Traffic được redirect qua Appliance                         │
+│    * ACL được áp dụng: chỉ forward packets theo policy          │
+│    * DNS Redirection: DNS query redirect đến captive portal      │
+│    * HTTP Redirection: HTTP traffic → captive portal page        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 5: CONTINUOUS MONITORING                      │
+│                                                                  │
+│  - Định kỳ re-check compliance (AV status, patch, AD)           │
+│  - Theo dõi hành vi bất thường (Zero-day detection)             │
+│  - Lắng nghe Syslog/Email alerts từ security tools bên ngoài    │
+│  - Deception monitoring (honeypot activity)                      │
+│                                                                  │
+│  Nếu có thay đổi (device trở nên non-compliant):               │
+│  → Tự động hạ xuống role thấp hơn                               │
+│  → Bắt đầu enforcement                                          │
+│  → Gửi alert (Email, SMS, Teams, Slack, WhatsApp, Syslog)       │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+<hr />
+<h2 id="device-discovery-profiling-kỹ-thuật-nhận-diện-thiết-bị">5.
+Device Discovery &amp; Profiling – Kỹ Thuật Nhận Diện Thiết Bị</h2>
+<p>Đây là một trong những điểm kỹ thuật thú vị nhất. EasyNAC sử dụng
+<strong>multi-vector profiling</strong> kết hợp nhiều nguồn dữ liệu để
+xây dựng hồ sơ thiết bị càng đầy đủ càng tốt.</p>
+<h3 id="passive-profiling-không-gửi-traffic">5.1 Passive Profiling –
+Không gửi traffic</h3>
+<p>Phương pháp này chỉ lắng nghe, không chủ động thăm dò:</p>
+<ul>
+<li><p><strong>ARP Requests</strong>: Khi thiết bị gửi ARP, Appliance
+đọc được source MAC và IP. OUI (3 byte đầu của MAC) tiết lộ nhà sản xuất
+(ví dụ: <code>00:50:56</code> → VMware, <code>b8:27:eb</code> →
+Raspberry Pi Foundation).</p></li>
+<li><p><strong>DHCP Requests</strong>: DHCP Option 55 (Parameter Request
+List) có thể được dùng để fingerprint hệ điều hành. Mỗi OS có “chữ ký”
+Option 55 khác nhau. DHCP Option 12 (Hostname) cung cấp tên máy. DHCP
+Option 60 (Vendor Class Identifier) cung cấp thông tin vendor.</p></li>
+<li><p><strong>NetBIOS Name Service broadcasts</strong>: Windows
+machines broadcast tên computer và workgroup/domain lên mạng định
+kỳ.</p></li>
+<li><p><strong>mDNS/Bonjour</strong>: Apple devices và một số IoT
+devices broadcast thông tin service qua Bonjour. Cho biết loại thiết bị,
+OS version, service đang chạy.</p></li>
+<li><p><strong>LLTD (Link Layer Topology Discovery)</strong>: Giao thức
+Microsoft dùng để vẽ sơ đồ mạng. Broadcast thông tin thiết bị.</p></li>
+<li><p><strong>UPnP SSDP Announcements</strong>: IoT devices broadcast
+thông tin qua UPnP/SSDP, bao gồm model, manufacturer, firmware
+version.</p></li>
+</ul>
+<h3 id="active-profiling-chủ-động-thăm-dò">5.2 Active Profiling – Chủ
+động thăm dò</h3>
+<ul>
+<li><p><strong>NMAP scanning</strong>: Công cụ mạnh nhất để fingerprint
+OS và phát hiện open ports. EasyNAC tích hợp NMAP để thực hiện OS
+detection và service version detection. <em>Lưu ý: Với subnet lớn (Class
+B trở lên), network scanning bị tắt mặc định để tránh tạo quá nhiều
+traffic.</em></p></li>
+<li><p><strong>SNMP</strong>: Query các switch trong mạng để lấy thông
+tin về ARP table, bridge forwarding table, và interface trên switch mà
+thiết bị đang cắm vào (switch port location).</p></li>
+<li><p><strong>SMB/NetBIOS scans</strong>: Kết nối đến port 137/139/445
+để lấy hostname, domain, OS version.</p></li>
+<li><p><strong>WMI (Windows Management Instrumentation)</strong>: Nếu có
+credential, WMI cho phép lấy thông tin chi tiết về Windows endpoint: OS
+version, installed patches, running processes, AV status (qua Windows
+Security Center).</p></li>
+<li><p><strong>RDP port check</strong>: Kiểm tra port 3389 để xác định
+Windows machine.</p></li>
+<li><p><strong>AD Integration query</strong>: Sau khi biết hostname,
+Appliance query trực tiếp Active Directory LDAP để xác minh device có
+trong domain không, thuộc OU nào, thuộc group nào.</p></li>
+<li><p><strong>3rd-party AV/XDR API</strong>: Gọi API của CrowdStrike,
+SentinelOne, Sophos, etc. để kiểm tra trạng thái agent và
+compliance.</p></li>
+</ul>
+<h3 id="device-profile-output">5.3 Device Profile Output</h3>
+<p>Toàn bộ thông tin được tổng hợp thành một Device Profile gồm:</p>
+<table>
+<thead>
+<tr>
+<th>Trường</th>
+<th>Nguồn</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAC Address</td>
+<td>ARP/DHCP</td>
+</tr>
+<tr>
+<td>IP Address</td>
+<td>ARP/DHCP</td>
+</tr>
+<tr>
+<td>Hostname</td>
+<td>DHCP Option 12, NetBIOS, AD</td>
+</tr>
+<tr>
+<td>OS &amp; Version</td>
+<td>NMAP, DHCP fingerprint, WMI</td>
+</tr>
+<tr>
+<td>Device Type</td>
+<td>OUI, UPnP, NMAP</td>
+</tr>
+<tr>
+<td>Manufacturer/Vendor</td>
+<td>OUI, UPnP</td>
+</tr>
+<tr>
+<td>Open Ports</td>
+<td>NMAP</td>
+</tr>
+<tr>
+<td>Switch Port</td>
+<td>SNMP</td>
+</tr>
+<tr>
+<td>Domain Membership</td>
+<td>AD integration</td>
+</tr>
+<tr>
+<td>AV Status</td>
+<td>AV API integration</td>
+</tr>
+<tr>
+<td>Patch Status</td>
+<td>Patch management integration</td>
+</tr>
+<tr>
+<td>Last Seen</td>
+<td>Continuous monitoring</td>
+</tr>
+<tr>
+<td>Trust Status</td>
+<td>Derived from all above</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="zero-trust-role-based-access-control-rbac">6. Zero Trust &amp;
+Role-Based Access Control (RBAC)</h2>
+<p>EasyNAC áp dụng mô hình <strong>Zero Trust</strong> theo nghĩa thực
+tiễn: mặc định <strong>tất cả thiết bị đều không được tin cậy</strong>
+cho đến khi được xác minh.</p>
+<h3 id="auto-trust-policy-engine">6.1 Auto Trust Policy Engine</h3>
+<p>Đây là bộ não ra quyết định. Admin định nghĩa các
+<strong>rules</strong> với điều kiện và action:</p>
+<p><strong>Ví dụ các policy rule:</strong></p>
+<pre><code>Rule 1: Nếu [Domain Joined = True] AND [AV = Active &amp; Up-to-date] THEN → FULL ACCESS
+Rule 2: Nếu [Device Type = Printer] AND [MAC OUI = HP/Xerox/...] THEN → PRINTER ACCESS (ACL)
+Rule 3: Nếu [BYOD Registration = Complete] THEN → BYOD ACCESS (ACL giới hạn)
+Rule 4: Nếu [BYOD Registration = Pending] THEN → CAPTIVE PORTAL (registration page)
+Rule 5: Nếu [Guest Account = Active] THEN → INTERNET ONLY
+Rule 6: Nếu [AV = Outdated] THEN → RESTRICTED (chỉ AV update server)
+Rule 7: Nếu [Unknown Device] THEN → QUARANTINE</code></pre>
+<h3 id="roles-và-acls">6.2 Roles và ACLs</h3>
+<p>Mỗi Role được map với một <strong>ACL</strong> xác định traffic nào
+được forward:</p>
+<ul>
+<li><strong>FULL ACCESS</strong>: ACL cho phép mọi traffic. ARP
+enforcement không kích hoạt.</li>
+<li><strong>BYOD ROLE</strong>: ACL cho phép đến tập subnet/IP cụ thể.
+Chặn lateral movement đến server segment.</li>
+<li><strong>GUEST ROLE</strong>: ACL chỉ cho phép DNS (port 53), HTTP
+(80), HTTPS (443) ra internet. Chặn mọi traffic internal.</li>
+<li><strong>REMEDIATION ROLE</strong>: ACL chỉ cho phép đến captive
+portal IP, AV update server, patch server.</li>
+<li><strong>BLOCKED</strong>: ACL từ chối mọi traffic.</li>
+</ul>
+<h3 id="continuous-re-evaluation">6.3 Continuous Re-evaluation</h3>
+<p>Điều quan trọng: Role assignment không phải một lần. EasyNAC
+<strong>liên tục kiểm tra lại</strong> trạng thái compliance. Nếu AV của
+một thiết bị đang Full Access đột nhiên bị tắt → Appliance phát hiện
+(qua polling AV server) → tự động hạ Role → bắt đầu enforcement → gửi
+alert.</p>
+<hr />
+<h2 id="anti-spoofing-device-fingerprinting">7. Anti-Spoofing &amp;
+Device Fingerprinting</h2>
+<p>MAC Address Spoofing là một kỹ thuật tấn công cơ bản: kẻ tấn công
+thay đổi MAC của thiết bị mình để giả mạo một thiết bị đã được trust
+trong hệ thống.</p>
+<h3 id="multi-attribute-fingerprinting">7.1 Multi-attribute
+Fingerprinting</h3>
+<p>EasyNAC giải quyết vấn đề này bằng cách tạo <strong>fingerprint đa
+chiều</strong> cho mỗi thiết bị, không chỉ dựa vào MAC:</p>
+<pre><code>Fingerprint = {
+  MAC Address,
+  IP Address (static hay DHCP range),
+  OS Type (Windows 10, Linux, iOS, etc.),
+  Hostname,
+  Open Ports,
+  DHCP fingerprint signature,
+  Switch Port (vị trí vật lý trên switch)
+}</code></pre>
+<p>Khi một device mới xuất hiện với MAC trùng với thiết bị đã được
+trust: 1. Appliance so sánh fingerprint mới với fingerprint đã lưu 2.
+Nếu có sự khác biệt (ví dụ: MAC giống nhưng OS khác, hostname khác) →
+spoofing được phát hiện 3. Device bị giữ ở trạng thái Restricted 4.
+Admin được alert</p>
+<p><strong>Ví dụ thực tế</strong>: Máy in HP có fingerprint với
+OS=“Printer firmware”, hostname=“HP-LaserJet-xxx”. Nếu kẻ tấn công clone
+MAC của máy in đó, thiết bị của họ (chạy Windows/Linux) sẽ có OS
+fingerprint khác → bị phát hiện ngay.</p>
+<h3 id="fingerprint-based-2fa-cho-vpn">7.2 Fingerprint-based 2FA cho
+VPN</h3>
+<p>Trong môi trường VPN, fingerprinting được dùng như một lớp xác thực
+thứ hai (2FA): <em>“Something you know”</em> (password) + <em>“Something
+you have”</em> (device with specific fingerprint). Mỗi agent được cài
+trên endpoint có một <strong>unique serial number</strong> – không thể
+giả mạo. Khi user VPN vào, EasyNAC xác minh cả credential lẫn device
+fingerprint.</p>
+<hr />
+<h2 id="automated-threat-response">8. Automated Threat Response</h2>
+<p>Đây là tính năng biến EasyNAC từ một công cụ kiểm soát thụ động thành
+một <strong>active cyber defense platform</strong>.</p>
+<h3 id="nguồn-trigger">8.1 Nguồn trigger</h3>
+<p>EasyNAC có thể nhận trigger từ: - <strong>Email alerts</strong>: Bất
+kỳ security tool nào gửi email cảnh báo - <strong>Syslog
+messages</strong>: Firewall, IPS, SIEM, NDR gửi syslog event -
+<strong>API webhooks</strong>: Từ XDR/EDR platforms - <strong>Internal
+detection</strong>: Từ deception module, zero-day detection của chính
+EasyNAC</p>
+<h3 id="cơ-chế-xử-lý">8.2 Cơ chế xử lý</h3>
+<p>Khi nhận trigger: 1. Parse message để extract IP/MAC của thiết bị
+liên quan 2. Tìm thiết bị trong Device Database 3. Thực hiện action ngay
+lập tức (trong vài giây): - Quarantine: hạ ACL xuống mức cách ly hoàn
+toàn - Restrict: giới hạn chỉ còn remediation resources - Block: cắt
+hoàn toàn 4. Ghi log sự kiện 5. Gửi notification đến admin</p>
+<h3 id="use-case-điển-hình">8.3 Use case điển hình</h3>
+<pre><code>Kịch bản:
+  CrowdStrike Falcon phát hiện ransomware trên máy PC-A (IP: 10.1.1.50)
+  
+Flow:
+  1. CrowdStrike gửi syslog alert đến EasyNAC
+  2. EasyNAC parse syslog: extract IP 10.1.1.50
+  3. EasyNAC lookup Device DB: PC-A, MAC: aa:bb:cc:dd:ee:ff
+  4. EasyNAC bắt đầu ARP Enforcement cho PC-A
+  5. Toàn bộ traffic của PC-A bị redirect qua Appliance
+  6. ACL: DROP tất cả → PC-A bị cô lập hoàn toàn trong giây lát
+  7. EasyNAC gửi email + Slack alert đến IT team
+  
+Thời gian từ CrowdStrike detect đến isolation: &lt; 5 giây</code></pre>
+<hr />
+<h2 id="zero-day-malware-lateral-spread-protection">9. Zero-Day &amp;
+Malware Lateral Spread Protection</h2>
+<h3 id="vấn-đề">9.1 Vấn đề</h3>
+<p>Zero-day malware (mã độc chưa có signature) không bị phát hiện bởi
+AV. Sau khi lây nhiễm một máy, malware thường <strong>quét mạng nội
+bộ</strong> (lateral movement) để tìm và lây sang các máy khác trong
+cùng subnet.</p>
+<h3 id="phát-hiện-qua-layer-2-visibility">9.2 Phát hiện qua Layer-2
+visibility</h3>
+<p>EasyNAC có một lợi thế độc đáo: nó lắng nghe <strong>toàn bộ
+broadcast traffic</strong> trên subnet được bảo vệ. Điều này cho phép
+phát hiện các pattern bất thường:</p>
+<p><strong>Pattern 1 – Excessive ARP Requests</strong>: Một máy bình
+thường chỉ gửi ARP Request khi cần kết nối đến IP mới. Nếu một máy đột
+nhiên gửi hàng trăm ARP Request đến nhiều IP khác nhau trong vài giây →
+đây là dấu hiệu của network scanning.</p>
+<p><strong>Pattern 2 – Dark IP Scans</strong>: EasyNAC biết IP nào đang
+active trong subnet (qua Device DB). Nếu có traffic đến các IP không có
+thiết bị nào đang sử dụng (Dark IPs) → dấu hiệu của port scanner hoặc
+worm đang tìm kiếm target.</p>
+<p><strong>Pattern 3 – ARP Flood</strong>: Quá nhiều ARP broadcasts
+trong thời gian ngắn → có thể là ARP DoS hoặc worm activity.</p>
+<p>Khi phát hiện pattern này, EasyNAC có thể: - Tự động quarantine thiết
+bị nghi vấn - Alert admin để điều tra - Log hành vi để forensics</p>
+<hr />
+<h2 id="deception-technology-honeypot-phân-tán">10. Deception Technology
+– Honeypot Phân Tán</h2>
+<h3 id="kiến-trúc-distributed-honeypot">10.1 Kiến trúc Distributed
+Honeypot</h3>
+<p>EasyNAC triển khai <strong>fake services</strong> trên mỗi
+VLAN/subnet mà nó đang bảo vệ. Các service giả bao gồm: - SSH (port 22)
+- Telnet (port 23) - FTP (port 21) - File shares (SMB port 445) -
+HTTP/HTTPS services - Và nhiều service khác</p>
+<p>Những service này <strong>không có mục đích kinh doanh hợp
+lệ</strong> – nghĩa là không có người dùng hay hệ thống nào cần kết nối
+đến chúng. Đây là tính chất quan trọng của honeypot hiệu quả:
+<strong>bất kỳ ai kết nối vào đây đều là nghi phạm</strong>.</p>
+<h3 id="lợi-thế-near-zero-false-positives">10.2 Lợi thế: Near-Zero False
+Positives</h3>
+<p>Khác với các IDS/IPS truyền thống phải phân tích pattern phức tạp và
+hay có false positive, honeypot của EasyNAC có gần như <strong>zero
+false positive</strong> vì: - Không có user thật nào được hướng dẫn kết
+nối vào các fake service này - Mọi kết nối đến honeypot đều từ: -
+Automated scanner/malware đang dò mạng - Kẻ tấn công đang thực hiện
+reconnaissance</p>
+<h3 id="detection-flow">10.3 Detection flow</h3>
+<pre><code>Kẻ tấn công đã xâm nhập một máy trong mạng:
+
+1. Kẻ tấn công chạy port scanner (nmap, masscan, etc.)
+2. Scanner phát hiện &quot;SSH server&quot; đang mở trên một IP
+3. Kẻ tấn công thử kết nối/login → kết nối với EasyNAC honeypot
+4. EasyNAC ghi nhận: IP nguồn, port đích, timestamp
+5. EasyNAC xác định đây là hành vi tấn công
+6. EasyNAC:
+   - Quarantine thiết bị nguồn (nếu policy cho phép)
+   - Gửi alert ngay lập tức đến admin
+   - Log toàn bộ interaction để forensics</code></pre>
+<h3 id="tầng-bảo-vệ-với-honey-service-trên-mỗi-vlan">10.4 Tầng bảo vệ
+với honey service trên mỗi VLAN</h3>
+<p>Việc triển khai honeypot <strong>trên từng VLAN</strong> (thay vì chỉ
+một chỗ tập trung) có ý nghĩa chiến thuật: kẻ tấn công dù đã vượt qua
+perimeter firewall và đang pivot từ VLAN này sang VLAN khác đều có thể
+bị phát hiện sớm. Đây là lớp phòng thủ <strong>nội bộ</strong>, bổ sung
+cho firewall và IDS.</p>
+<hr />
+<h2 id="byod-guest-access-management">11. BYOD &amp; Guest Access
+Management</h2>
+<h3 id="byod-registration-flow">11.1 BYOD Registration Flow</h3>
+<pre><code>User mang thiết bị cá nhân vào mạng:
+
+1. Thiết bị kết nối → EasyNAC detect → Role: UNREGISTERED BYOD
+2. ARP Enforcement → HTTP/DNS redirect → Captive Portal
+3. User đăng nhập Captive Portal (AD credentials hoặc social login)
+4. Portal xác thực user với AD
+5. Kiểm tra policy: user này được phép có bao nhiêu BYOD?
+6. Nếu đã đủ số lượng → từ chối, thông báo
+7. Nếu còn chỗ:
+   - Ghi nhận: User X → Device Y (MAC: ...)
+   - Assign BYOD Role với ACL phù hợp
+   - Thiết bị được truy cập tài nguyên đã được approve
+8. Admin có thể revoke BYOD registration bất kỳ lúc nào</code></pre>
+<h3 id="policy-controls-cho-byod">11.2 Policy controls cho BYOD</h3>
+<ul>
+<li><strong>Số lượng thiết bị tối đa</strong> theo user/group</li>
+<li><strong>Loại thiết bị</strong> được phép (chỉ iOS, chỉ Android,
+etc.)</li>
+<li><strong>Tài nguyên được phép</strong>: specific subnet, specific IP
+ranges</li>
+<li><strong>Thời gian hết hạn</strong>: BYOD token có thể expire</li>
+<li><strong>Tracking</strong>: Lưu trữ lịch sử ai dùng thiết bị nào, khi
+nào</li>
+</ul>
+<h3 id="guest-access">11.3 Guest Access</h3>
+<p>EasyNAC hỗ trợ hai model guest:</p>
+<p><strong>Model 1 – Sponsor-based</strong>: User nội bộ (sponsor) tạo
+tài khoản guest, đặt thời gian hết hạn (vài giờ đến vài ngày).</p>
+<p><strong>Model 2 – Self-registration</strong>: Guest tự tạo tài khoản
+qua captive portal (có thể yêu cầu email verification, điện thoại OTP).
+Sponsor có thể được thông báo để approve.</p>
+<p>Cả hai đều cho phép <strong>group registration</strong>: tạo nhiều
+tài khoản cùng lúc cho một buổi họp, hội thảo, lớp học.</p>
+<hr />
+<h2 id="kiến-trúc-triển-khai-3-phương-thức-kết-nối">12. Kiến Trúc Triển
+Khai: 3 Phương Thức Kết Nối</h2>
+<p>EasyNAC Appliance cần Layer-2 visibility. Có 3 cách đạt được điều
+này:</p>
+<h3 id="method-1-physical-connection">Method 1 – Physical
+Connection</h3>
+<p>Appliance cắm thêm NIC (network interface card) vào switch access
+port để có Layer-2 visibility cho subnet đó. Phù hợp cho môi trường nhỏ,
+không cần cấu hình switch.</p>
+<pre><code>[PC/Device] ──── [Access Switch] ──── [Core Switch] ──── [Internet]
+                      │
+                 Access Port
+                      │
+               [EasyNAC NIC]──── [EasyNAC Appliance] (Management NIC) ──── [Management Network]</code></pre>
+<h3 id="method-2-802.1q-trunk">Method 2 – 802.1q Trunk</h3>
+<p>Cấu hình một <strong>trunk port</strong> trên switch để gửi nhiều
+VLAN đến Appliance. Một NIC của Appliance nhận nhiều VLAN tagged. Cho
+phép bảo vệ nhiều subnet từ một kết nối vật lý. Appliance tạo
+<strong>sub-interface</strong> cho mỗi VLAN.</p>
+<pre><code>[VLAN 10 devices]──┐
+[VLAN 20 devices]──┤──[Switch Trunk Port]──802.1q──[EasyNAC Trunk NIC]
+[VLAN 30 devices]──┘
+                                                    (xử lý 3 VLAN)</code></pre>
+<h3 id="method-3-vlinks-enforcer-sensors-cho-remote-sites">Method 3 –
+vLinks / Enforcer Sensors cho Remote Sites</h3>
+<p>Thách thức với site từ xa: không có kết nối Layer-2 trực tiếp về
+headquarters. Giải pháp:</p>
+<p><strong>vLinks</strong>: Thiết bị phần cứng nhỏ đặt tại site xa, tạo
+Layer-2 tunnel (VPN tunnel) về vLinks Central appliance hoặc về CGX
+Access tại HQ. Toàn bộ Layer-2 traffic từ site xa được tunnel về, giúp
+Appliance tập trung “nhìn thấy” và kiểm soát.</p>
+<p><strong>Enforcer Sensor (software)</strong>: Cài trên
+Windows/Linux/Raspberry Pi tại site xa. Sensor <strong>tự thực hiện ARP
+enforcement cục bộ</strong> và báo cáo về Appliance. Không cần kéo
+Layer-2 về trung tâm. Phù hợp hơn cho WAN có bandwidth hạn chế.</p>
+<hr />
+<h2 id="enforcer-sensors-vlinks-mở-rộng-bảo-vệ-chi-nhánh">13. Enforcer
+Sensors &amp; vLinks – Mở Rộng Bảo Vệ Chi Nhánh</h2>
+<h3 id="enforcer-sensor-chi-tiết-kỹ-thuật">13.1 Enforcer Sensor – Chi
+tiết kỹ thuật</h3>
+<p>Sensor là phần mềm chạy trên Linux/Windows/Raspberry Pi: 1. Sensor
+lắng nghe broadcast traffic cục bộ 2. Phát hiện thiết bị mới → báo cáo
+về Appliance (qua secure channel qua WAN) 3. Appliance profile thiết bị,
+quyết định Role 4. Appliance gửi chỉ thị về Sensor: “Device MAC XX:XX… →
+QUARANTINE” 5. Sensor thực hiện ARP enforcement cục bộ 6. Tất cả tính
+năng: compliance checks, captive portal, automated threat response đều
+được hỗ trợ</p>
+<p><strong>Lợi ích quan trọng</strong>: Cả môi trường
+<strong>MPLS</strong> và <strong>NAT</strong> đều được hỗ trợ. Tuy
+nhiên, trong môi trường NAT, khả năng profiling đầy đủ có thể bị hạn chế
+vì Appliance không nhìn thấy Layer-2 traffic của các thiết bị đứng sau
+NAT.</p>
+<h3 id="agent-tùy-chọn-khi-nào-cần">13.2 Agent tùy chọn – Khi nào
+cần?</h3>
+<p>EasyNAC có thể cài <strong>agent</strong> trên Windows/Linux endpoint
+để tăng cường khả năng: - <strong>Compliance checks chi tiết
+hơn</strong>: running processes, registry values, specific files, custom
+scripts - <strong>Phát hiện nhanh hơn</strong>: trong vòng <strong>10
+giây</strong> thay vì phụ thuộc polling interval - <strong>Real-time
+Wi-Fi control</strong>: khi endpoint kết nối vào mạng có dây của công
+ty, agent tự động <strong>tắt Wi-Fi adapter</strong> để ngăn dual-homing
+(kết nối đồng thời cả wired lẫn wireless) - <strong>Automatic
+remediation</strong>: khi compliance check thất bại, agent tự chạy
+script khắc phục (ví dụ: start AV update) - <strong>Pop-up
+notifications</strong>: hiển thị thông báo trực tiếp cho user</p>
+<hr />
+<h2 id="vpn-inline-enforcement">14. VPN Inline Enforcement</h2>
+<h3 id="vấn-đề-vpn">14.1 Vấn đề VPN</h3>
+<p>Hầu hết NAC hoạt động trên LAN. Nhưng với remote workers kết nối qua
+VPN, thiết bị đầu cuối có thể đang ở nhà, không được kiểm soát, không
+comply với security policy. VPN truyền thống không kiểm tra endpoint
+posture.</p>
+<h3 id="inline-mode-cho-vpn">14.2 Inline Mode cho VPN</h3>
+<p>EasyNAC Appliance được đặt ở <strong>bridge mode</strong> (inline)
+giữa VPN server và phần mạng nội bộ được bảo vệ:</p>
+<pre><code>[Remote User] ──VPN tunnel──► [VPN Server] ──► [EasyNAC Appliance] ──► [Internal Network]
+                                                      │
+                                          (kiểm tra compliance)
+                                                      │
+                              ┌───────────────────────┴──────────────────────┐
+                              │                                               │
+                    [Compliant → PASS]                           [Non-compliant → BLOCK]
+                              │                                               │
+                    [Traffic forwarded]                           [Redirect to remediation]</code></pre>
+<p>Agent được <strong>bắt buộc</strong> trong mode này (khác với LAN
+agentless). Agent trên endpoint giao tiếp với Appliance để xác nhận
+compliance.</p>
+<p><strong>Kết hợp Fingerprint làm 2FA</strong>: Agent có unique serial
+number. Khi user VPN vào với đúng credential nhưng từ thiết bị khác →
+fingerprint không khớp → bị chặn. Đây là một dạng transparent
+device-based 2FA.</p>
+<hr />
+<h2 id="high-availability-ha">15. High Availability (HA)</h2>
+<p>EasyNAC hỗ trợ HA theo mô hình <strong>active-passive two-box
+design</strong>:</p>
+<pre><code>[Primary Appliance] ──sync─── [Backup Appliance]
+       │                              │
+    (Active)                      (Standby)
+       │
+[Network devices]</code></pre>
+<p>Cơ chế: - Primary <strong>sync liên tục</strong> database và
+configuration sang Backup - Backup <strong>monitor</strong> Primary
+(heartbeat) - Nếu Backup xác định Primary offline → <strong>Backup tự
+động become Active</strong> - Khi Primary trở lại online: Backup sync
+ngược lại, Primary trở thành Active</p>
+<p><strong>Fail-open design</strong>: Vì EasyNAC là
+<strong>out-of-band</strong> (không nằm inline với traffic thông
+thường), nếu toàn bộ Appliance fail → network tiếp tục hoạt động bình
+thường (chỉ mất khả năng enforcement). Đây là đặc tính quan trọng: không
+bao giờ tạo single point of failure cho network connectivity.</p>
+<hr />
+<h2 id="central-visibility-manager-cvm-1">16. Central Visibility Manager
+(CVM)</h2>
+<p>Dành cho tổ chức có nhiều Appliance tại nhiều địa điểm:</p>
+<p><strong>Tính năng chính:</strong> - <strong>Consolidated
+Dashboard</strong>: Nhìn toàn cảnh tất cả devices, events trên mọi site
+- <strong>Policy Synchronization</strong>: Deploy policy thay đổi đến
+nhiều Appliance đồng thời - <strong>License Management</strong>: Chia sẻ
+license pool giữa các Appliance (tối ưu hóa chi phí) - <strong>Device
+Roaming</strong>: Khi user di chuyển giữa các site, device được nhận ra
+và áp dụng policy đúng - <strong>Automated Backups</strong>: CVM tự động
+backup cấu hình của tất cả Appliance - <strong>Firmware
+Management</strong>: Đơn giản hóa việc cập nhật firmware cho nhiều thiết
+bị - <strong>Aggregated Reporting</strong>: Báo cáo tổng hợp có thể xem
+theo toàn bộ hoặc theo region/site</p>
+<hr />
+<h2 id="tích-hợp-hệ-sinh-thái-bảo-mật">17. Tích Hợp Hệ Sinh Thái Bảo
+Mật</h2>
+<p>EasyNAC 3.2 tích hợp với danh sách rộng lớn các giải pháp:</p>
+<h3 id="identity-directory">Identity &amp; Directory</h3>
+<ul>
+<li>Microsoft Active Directory / Entra ID (Azure AD)</li>
+<li>OKTA Verify</li>
+</ul>
+<h3 id="endpoint-security-xdr">Endpoint Security / XDR</h3>
+<ul>
+<li>CrowdStrike Falcon</li>
+<li>SentinelOne</li>
+<li>Palo Alto Cortex XDR</li>
+<li>Microsoft Defender</li>
+<li>Microsoft Intune</li>
+<li>Carbon Black Endpoint Standard</li>
+<li>Cybereason</li>
+<li>Elastic Open XDR</li>
+<li>FireEye HX</li>
+<li>Trellix ePolicy Orchestrator</li>
+</ul>
+<h3 id="antivirus">Antivirus</h3>
+<ul>
+<li>ESET Antivirus</li>
+<li>Kaspersky Antivirus</li>
+<li>Sophos Central</li>
+<li>Bitdefender</li>
+<li>Symantec Endpoint Protection</li>
+<li>Trend Micro (OfficeScan, Apex Central, Vision One)</li>
+<li>Webroot</li>
+</ul>
+<h3 id="patch-endpoint-management">Patch &amp; Endpoint Management</h3>
+<ul>
+<li>HCL BigFix</li>
+<li>Ivanti Security Controls</li>
+<li>Kaseya VSA</li>
+<li>ManageEngine Desktop Central / Patch Manager</li>
+<li>Microsoft SCCM / WSUS</li>
+<li>SolarWinds Observability</li>
+<li>42 Gears SureMDM</li>
+</ul>
+<h3 id="vulnerability-management">Vulnerability Management</h3>
+<ul>
+<li>Tenable Vulnerability Management</li>
+</ul>
+<h3 id="specialty">Specialty</h3>
+<ul>
+<li>Moscii StarCat</li>
+</ul>
+<p><strong>Cơ chế tích hợp</strong>: Thông qua API của từng vendor.
+EasyNAC query API để lấy trạng thái compliance theo lịch định kỳ. Không
+cần agent trên endpoint để thực hiện compliance check – chỉ cần kết nối
+API từ Appliance đến management server của từng giải pháp.</p>
+<hr />
+<h2 id="compliance-checks-endpoint-posture-validation">18. Compliance
+Checks &amp; Endpoint Posture Validation</h2>
+<h3 id="agentless-compliance-checks">18.1 Agentless Compliance
+Checks</h3>
+<p>Thông qua API integration: 
+<p>- <strong>AV Check</strong>: AV có được cài không? Agent đang active không? Definitions có up-to-date không?
+(dựa trên policy: ví dụ không được cũ hơn 3 ngày)</p> 
+<p>- <strong>Patch Check</strong>: Các critical patches đã được cài chưa? (thông qua patch
+management API)</p> 
+<p>- <strong>Domain Check</strong>: Thiết bị có join domain
+không? (thông qua AD LDAP query)</p> 
+<p>- <strong>MDM Check</strong>: Thiết bị
+di động có được enrolled trong MDM không?</p></p>
+<h3 id="agent-based-compliance-checks-tùy-chọn">18.2 Agent-based
+Compliance Checks (tùy chọn)</h3>
+<p>Với agent, kiểm tra chi tiết hơn: - Running processes và version -
+Registry values (ví dụ: firewall enabled = 1) - File existence và
+version (ví dụ: specific security software) - Machine name và OS version
+- Custom scripts</p>
+<h3 id="dynamic-re-check">18.3 Dynamic Re-check</h3>
+<p>Compliance không được kiểm tra một lần khi kết nối. Appliance
+<strong>định kỳ poll</strong> các management server để kiểm tra lại. Nếu
+AV của một máy bị tắt giữa chừng → phát hiện tại lần poll tiếp theo → hạ
+Role tự động.</p>
+<hr />
+<h2 id="licensing-sizing">19. Licensing &amp; Sizing</h2>
+<h3 id="mô-hình-license">19.1 Mô hình License</h3>
+<p>EasyNAC dùng mô hình <strong>Concurrent Device License</strong> dựa
+trên <strong>unique MAC address</strong>: 
+<p>- Chỉ đếm thiết bị<strong>active trong 5 phút gần nhất</strong></p> 
+<p>- Thiết bị Untrusted (bị block/quarantine) <strong>không tiêu thụ license</strong></p> 
+<p>- Agents được mua riêng, không gộp trong base license</p></p>
+<p><strong>Hình thức bán:</strong> - <strong>Perpetual License</strong>:
+Cho virtual appliance hoặc hardware appliance – trả một lần, dùng mãi -
+<strong>Subscription</strong>: Trả hàng năm</p>
+<h3 id="appliance-capacity">19.2 Appliance Capacity</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Max Devices</th>
+<th>Max VLANs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small</td>
+<td>đến vài trăm</td>
+<td>đến 10</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>vài nghìn</td>
+<td>đến 100</td>
+</tr>
+<tr>
+<td>Large</td>
+<td>đến 200,000+</td>
+<td>đến 200</td>
+</tr>
+</tbody>
+</table>
+<p><em>Capacity thực tế phụ thuộc vào số VLAN, endpoint, và các tính
+năng được bật</em></p>
+<h3 id="grace-period">19.3 Grace Period</h3>
+<p>Nếu license bị vượt quá: - <strong>Vượt &lt; 10%</strong>: Cảnh báo
+hiển thị trên dashboard, hệ thống hoạt động bình thường - <strong>Vượt
+&gt; 10%</strong>: Enforcement bị tắt cho phần thiết bị trusted vượt
+ngưỡng (untrusted vẫn bị block)</p>
+<h3 id="sizing-guidelines">19.4 Sizing Guidelines</h3>
+<p>Khi sizing, cần đếm <strong>tất cả thiết bị</strong> trên subnet được
+bảo vệ, bao gồm: - PC, laptop - Máy in, máy scan - Switch, AP (nếu trên
+cùng subnet) - IoT devices - VoIP phones</p>
+<p>Subnet không được bảo vệ (ví dụ: server segment, VoIP segment nếu
+không yêu cầu kiểm soát) không cần license.</p>
+<hr />
+<h2 id="so-sánh-với-nac-truyền-thống-802.1x">20. So Sánh với NAC Truyền
+Thống (802.1X)</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Tiêu chí</th>
+<th>EasyNAC (ARP-based)</th>
+<th>NAC 802.1X truyền thống</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Thay đổi switch</strong></td>
+<td>Không cần</td>
+<td>Bắt buộc (802.1X enabled)</td>
+</tr>
+<tr>
+<td><strong>Switch requirement</strong></td>
+<td>Mọi loại switch, kể cả unmanaged</td>
+<td>Switch phải hỗ trợ 802.1X</td>
+</tr>
+<tr>
+<td><strong>RADIUS server</strong></td>
+<td>Không cần</td>
+<td>Bắt buộc</td>
+</tr>
+<tr>
+<td><strong>Supplicant trên endpoint</strong></td>
+<td>Không cần</td>
+<td>Thường cần</td>
+</tr>
+<tr>
+<td><strong>Thời gian triển khai</strong></td>
+<td>Ngày đến tuần</td>
+<td>Tháng</td>
+</tr>
+<tr>
+<td><strong>IoT/OT support</strong></td>
+<td>Tốt (agentless, không cần supplicant)</td>
+<td>Khó (IoT thường không có supplicant)</td>
+</tr>
+<tr>
+<td><strong>Phát hiện thiết bị</strong></td>
+<td>Tức thì (Layer-2 broadcast)</td>
+<td>Phụ thuộc vào supplicant</td>
+</tr>
+<tr>
+<td><strong>Granularity enforcement</strong></td>
+<td>Per-device, per-VLAN</td>
+<td>Per-port (switch port level)</td>
+</tr>
+<tr>
+<td><strong>Fail-open khi appliance fail</strong></td>
+<td>Có (out-of-band)</td>
+<td>Phụ thuộc cấu hình</td>
+</tr>
+<tr>
+<td><strong>Honeypot</strong></td>
+<td>Built-in</td>
+<td>Không có</td>
+</tr>
+<tr>
+<td><strong>Lateral spread detection</strong></td>
+<td>Built-in (Layer-2 monitoring)</td>
+<td>Không có</td>
+</tr>
+<tr>
+<td><strong>Chi phí tổng thể</strong></td>
+<td>Thấp hơn</td>
+<td>Cao hơn</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="điểm-mạnh-giới-hạn-đánh-giá-tổng-quan">21. Điểm Mạnh, Giới Hạn
+&amp; Đánh Giá Tổng Quan</h2>
+<h3 id="điểm-mạnh">Điểm mạnh</h3>
+<p><strong>1. Triển khai thực sự đơn giản</strong>: Không cần thay đổi
+bất kỳ thiết bị mạng nào. Đây là lợi thế lớn nhất, đặc biệt với tổ chức
+có nhiều site.</p>
+<p><strong>2. Bảo mật sâu hơn NAC truyền thống trong một số khía
+cạnh</strong>: ARP enforcement ngăn lateral movement ngay tại Layer-2,
+ngay cả khi hai máy cùng VLAN – điều mà 802.1X không làm được.</p>
+<p><strong>3. Deception technology tích hợp sẵn</strong>: Không cần mua
+riêng giải pháp honeypot – EasyNAC có sẵn và phủ toàn bộ VLAN.</p>
+<p><strong>4. Automated Threat Response thực sự nhanh</strong>: Từ lúc
+nhận syslog alert đến khi cô lập thiết bị chỉ vài giây, không cần can
+thiệp thủ công.</p>
+<p><strong>5. IoT/OT friendly</strong>: Không yêu cầu supplicant hay
+agent → phù hợp cho thiết bị IoT, máy in, camera, PLC không thể cài thêm
+phần mềm.</p>
+<p><strong>6. Kinh tế cho multi-site</strong>: Enforcer Sensor rẻ (chạy
+trên Raspberry Pi) giúp mở rộng bảo vệ đến hàng nghìn site với chi phí
+thấp.</p>
+<h3 id="giới-hạn-lưu-ý">Giới hạn &amp; lưu ý</h3>
+<p><strong>1. IPv6</strong>: ARP enforcement là cơ chế IPv4. Môi trường
+thuần IPv6 cần phương pháp enforcement khác. Dual-stack được hỗ trợ
+nhưng không khuyến nghị cho môi trường IPv6-only.</p>
+<p><strong>2. Môi trường NAT</strong>: Appliance có thể không profile
+đầy đủ các thiết bị đứng sau NAT do không thấy trực tiếp Layer-2
+traffic.</p>
+<p><strong>3. Phụ thuộc Layer-2 connectivity</strong>: Appliance cần có
+Layer-2 visibility đến subnet được bảo vệ. Môi trường routing thuần túy
+không có trunk port hay Enforcer Sensor sẽ cần giải pháp bổ sung.</p>
+<p><strong>4. ARP Spoofing defense không hoàn hảo 100%</strong>: Với kẻ
+tấn công tinh vi có thể replay ARP flooding nhanh hơn Appliance có thể
+gửi corrections – tuy nhiên đây là tình huống hiếm gặp và phức tạp.</p>
+<p><strong>5. Agent cần thiết cho VPN và một số compliance check nâng
+cao</strong>: Khi cần bảo vệ VPN hoặc cần compliance check chi tiết
+(registry, processes), agent là bắt buộc – mâu thuẫn một phần với tuyên
+bố “agentless”.</p>
+<h3 id="kết-luận">Kết luận</h3>
+<p>EasyNAC là lựa chọn hấp dẫn cho các tổ chức muốn triển khai NAC
+nhanh, đặc biệt khi:</p> 
+<p>- Hạ tầng mạng đa dạng, không thể đồng nhất hóa
+switch lên 802.1X</p>
+<p>- Có nhiều IoT/OT devices cần kiểm soát - Có nhiều
+site từ xa với IT staff hạn chế - Cần tích hợp sâu với hệ sinh thái
+XDR/EDR hiện có</p> 
+<p>- Muốn thêm Deception/honeypot mà không muốn quản lý
+thêm sản phẩm riêng</p>
+<p>Với những tổ chức đã có 802.1X hoàn chỉnh, EasyNAC vẫn có thể là lớp
+bổ sung giá trị với các tính năng độc đáo như ARP-based lateral movement
+detection, distributed honeypot, và automated threat response tích
+hợp.</p>
+<hr />
+</body>
+</html>
